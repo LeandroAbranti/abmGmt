@@ -496,6 +496,13 @@
                 return;
             }
 
+            // Verificar se existe configuração manual do admin no localStorage
+            const adminManual = localStorage.getItem('adminConfigurado');
+            if (adminManual) {
+                console.log('👑 Administrador já foi configurado manualmente.');
+                return;
+            }
+
             // Criar registros base para matrículas autorizadas (sem senha)
             for (let matricula in matriculasAutorizadas) {
                 const config = matriculasAutorizadas[matricula];
@@ -530,7 +537,51 @@
             localStorage.setItem('adminConfigurado', 'true');
             console.log(`✅ Administrador ${matricula} configurado manualmente.`);
             
+            // Salvar imediatamente para evitar perda de dados
+            salvarDados();
+            
             return true;
+        }
+        
+        // Função para configurar admin manualmente via interface (para produção)
+        function configurarAdminManualmente() {
+            const matricula = prompt('🔐 Digite a matrícula do administrador:');
+            if (!matricula) return;
+            
+            const senha = prompt('🔑 Digite a senha do administrador:');
+            if (!senha || senha.length < 6) {
+                alert('❌ A senha deve ter pelo menos 6 caracteres!');
+                return;
+            }
+            
+            const confirmaSenha = prompt('🔑 Confirme a senha:');
+            if (senha !== confirmaSenha) {
+                alert('❌ As senhas não coincidem!');
+                return;
+            }
+            
+            const nome = prompt('👤 Digite o nome do administrador:') || `Admin ${matricula}`;
+            const senhaHash = CryptoJS.SHA256(senha).toString();
+            
+            // Adicionar usuário admin
+            sistemaData.usuarios[matricula] = {
+                senha: senhaHash,
+                ativo: true,
+                isAdmin: true,
+                primeiroAcesso: false,
+                nome: nome,
+                criadoEm: new Date(),
+                criadoPor: 'configuracao_manual',
+                senhaDefinidaEm: new Date()
+            };
+            
+            // Marcar que o admin foi configurado manualmente
+            localStorage.setItem('adminConfigurado', 'true');
+            
+            // Salvar imediatamente para evitar perda de dados
+            salvarDados();
+            
+            alert(`✅ Administrador configurado com sucesso!\n\nMatrícula: ${matricula}\nNome: ${nome}`);
         }
 
         // Função para gerar senha temporária segura
@@ -671,16 +722,23 @@
                 const senhaHash = CryptoJS.SHA256(senha).toString();
                 const config = matriculasAutorizadas[matricula];
                 
+                // Preservar dados existentes do usuário se houver
+                const dadosUsuario = usuario || {};
+                
                 sistemaData.usuarios[matricula] = {
+                    ...dadosUsuario,
                     senha: senhaHash,
                     ativo: true,
                     isAdmin: config.isAdmin,
-                    primeiroAcesso: false,
+                    primeiroAcesso: false, // Importante: marcar como false para evitar loop
                     nome: config.nome,
-                    criadoEm: usuario ? usuario.criadoEm : new Date(),
-                    criadoPor: usuario ? usuario.criadoPor : 'primeiro_acesso',
+                    criadoEm: dadosUsuario.criadoEm || new Date(),
+                    criadoPor: dadosUsuario.criadoPor || 'primeiro_acesso',
                     senhaDefinidaEm: new Date()
                 };
+                
+                // Salvar imediatamente para evitar perda de dados
+                salvarDados();
 
                 alert('✅ Senha definida com sucesso! Fazendo login...');
             } else {
@@ -1592,15 +1650,21 @@
             }
         }
 
-        // Função para salvar dados (simulação de persistência)
+        // Função para salvar dados no localStorage
         function salvarDados() {
-            // Em um sistema real, aqui seria feita a chamada para a API do backend
-            console.log('📁 Dados salvos automaticamente:', {
-                usuarios: Object.keys(sistemaData.usuarios).length,
-                eventos: sistemaData.eventos.length,
-                abordagens: sistemaData.abordagens.length,
-                timestamp: new Date().toISOString()
-            });
+            try {
+                // Salvar dados no localStorage
+                localStorage.setItem('sistemaData', JSON.stringify(sistemaData));
+                console.log('📁 Dados salvos automaticamente:', {
+                    usuarios: Object.keys(sistemaData.usuarios).length,
+                    eventos: sistemaData.eventos.length,
+                    abordagens: sistemaData.abordagens.length,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (e) {
+                console.error('❌ Erro ao salvar dados:', e);
+                alert('⚠️ Erro ao salvar dados. Verifique o espaço disponível no navegador.');
+            }
         }
 
         // Função para carregar dados de demonstração
@@ -1684,11 +1748,34 @@
         function inicializarSistema() {
             console.log('🚔 Iniciando Sistema Balada Segura...');
             
-            // Inicializar usuários base (sem senhas)
-            inicializarUsuariosBase();
-            
-            // Carregar dados de demonstração
-            carregarDadosDemonstracao();
+            // Verificar se já existe dados no localStorage
+            const dadosSalvos = localStorage.getItem('sistemaData');
+            if (dadosSalvos) {
+                try {
+                    const dados = JSON.parse(dadosSalvos);
+                    // Restaurar dados salvos
+                    if (dados && dados.usuarios && Object.keys(dados.usuarios).length > 0) {
+                        sistemaData = dados;
+                        console.log('📂 Dados restaurados do armazenamento local.');
+                    } else {
+                        // Inicializar usuários base (sem senhas)
+                        inicializarUsuariosBase();
+                        // Carregar dados de demonstração
+                        carregarDadosDemonstracao();
+                    }
+                } catch (e) {
+                    console.error('❌ Erro ao restaurar dados:', e);
+                    // Inicializar usuários base (sem senhas)
+                    inicializarUsuariosBase();
+                    // Carregar dados de demonstração
+                    carregarDadosDemonstracao();
+                }
+            } else {
+                // Inicializar usuários base (sem senhas)
+                inicializarUsuariosBase();
+                // Carregar dados de demonstração
+                carregarDadosDemonstracao();
+            }
             
             // Inicializar formatadores
             initializeFormatters();
@@ -1824,7 +1911,8 @@
                             senha: CryptoJS.SHA256(novaSenhaTemp).toString(),
                             ativo: true,
                             isAdmin: usuario.isAdmin,
-                            primeiroAcesso: true,
+                            primeiroAcesso: false, // Definir como false para evitar loop
+                            nome: usuario.nome || `Operador ${matricula}`,
                             senhaTemporaria: novaSenhaTemp,
                             criadoEm: new Date(),
                             criadoPor: 'sistema'
@@ -1832,6 +1920,9 @@
                     }
                 }
                 sistemaData.usuarios = usuariosTemp;
+                
+                // Salvar imediatamente para evitar perda de dados
+                salvarDados();
                 
                 // Exibir novas credenciais
                 let credenciais = '';
