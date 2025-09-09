@@ -952,7 +952,7 @@
             
             const usuariosAtivos = Object.keys(sistemaData.usuarios).filter(matricula => {
                 const usuario = sistemaData.usuarios[matricula];
-                return !usuario.isAdmin && usuario.ativo;
+                return (matricula === '257' || !usuario.isAdmin) && usuario.ativo;
             });
 
             if (usuariosAtivos.length === 0) {
