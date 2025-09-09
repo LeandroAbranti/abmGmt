@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Balada Segura - Registro de Abordagens</title>
+        <script src="crypto-js.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(31, 38, 135, 0.5);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #e8f4f8;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .status-active {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .status-inactive {
+            color: #f87171;
+            font-weight: bold;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px;
+        }
+
+        .location-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .card {
+                padding: 20px;
+                margin: 10px 0;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .navbar {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin: 10px;
+        }
+
+        .stats-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .export-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div style="text-align: center; padding: 5px; background: rgba(0,0,0,0.2);">
+        <p style="font-size: 12px; font-style: italic; color: #a8e6cf; margin: 0;">Leandro Abranti Developer</p>
+    </div>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚔 Sistema Balada Segura</h1>
+            <p>Registro de Abordagens de Trânsito</p>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="loginScreen" class="card">
+            <h2 style="text-align: center; margin-bottom: 30px;">🔐 Acesso ao Sistema</h2>
+            <div class="form-group">
+                <label for="matricula">Matrícula:</label>
+                <input type="text" id="matricula" placeholder="Digite sua matrícula">
+            </div>
+            <div class="form-group">
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" placeholder="Digite sua senha (primeiro acesso: crie sua senha)">
+            </div>
+            <div style="text-align: center;">
+                <button class="btn btn-primary" onclick="login()">Entrar</button>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; font-size: 14px;">
+                <h4 style="margin-bottom: 10px;">ℹ️ Instruções de Acesso:</h4>
+                <p>• <strong>Primeiro acesso:</strong> Digite sua matrícula e crie uma senha de pelo menos 6 caracteres</p>
+                <p>• <strong>Acessos seguintes:</strong> Use sua matrícula e senha já definida</p>
+                <p>• <strong>Matrículas autorizadas:</strong> 257 (Admin), 100, 101</p>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <div class="navbar">
+                <div class="user-info">
+                    <span id="userInfo" class="badge"></span>
+                    <span id="eventStatus" class="badge"></span>
+                </div>
+                <button class="btn btn-danger" onclick="logout()">Sair</button>
+            </div>
+
+            <!-- Admin Panel -->
+            <div id="adminPanel" class="hidden">
+                <!-- Estatísticas -->
+                <div id="statsSection" class="grid">
+                    <div class="stats-card">
+                        <div class="stats-number" id="totalUsuarios">0</div>
+                        <div>Usuários Cadastrados</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number" id="totalEventos">0</div>
+                        <div>Eventos Criados</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number" id="totalAbordagens">0</div>
+                        <div>Total de Abordagens</div>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <!-- Gerenciar Usuários -->
+                    <div class="card">
+                        <h3>👥 Gerenciar Usuários</h3>
+                        <div class="form-group">
+                            <label>Nova Matrícula:</label>
+                            <input type="text" id="novaMatricula" placeholder="Digite a matrícula">
+                        </div>
+                        <p style="color: #e8f4f8; font-size: 14px; margin: 10px 0;">
+                            💡 O usuário definirá sua própria senha no primeiro acesso ao sistema.
+                        </p>
+                        <button class="btn btn-success" onclick="cadastrarUsuario()">Cadastrar Usuário</button>
+                        <div id="usuariosList" class="table-responsive" style="margin-top: 20px;"></div>
+                    </div>
+
+                    <!-- Criar Evento Blitz -->
+                    <div class="card">
+                        <h3>🚨 Criar Evento Blitz</h3>
+                        <div class="form-group">
+                            <label>Nome da Blitz:</label>
+                            <input type="text" id="nomeBlitz" value="Balada Segura" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Data:</label>
+                            <input type="date" id="dataBlitz">
+                        </div>
+                        <div class="form-group">
+                            <label>Hora:</label>
+                            <input type="time" id="horaBlitz">
+                        </div>
+                        <button class="btn btn-primary" onclick="obterLocalizacao()">📍 Obter Localização Atual</button>
+                        <div id="localizacaoInfo" class="location-info hidden"></div>
+                        <div class="form-group">
+                            <label>Local (manual):</label>
+                            <input type="text" id="localBlitz" placeholder="Ou digite o local manualmente">
+                        </div>
+                        <div class="form-group">
+                            <label>Matrículas Participantes:</label>
+                            <div id="matriculasDisponiveis" class="checkbox-group"></div>
+                        </div>
+                        <button class="btn btn-success" onclick="criarEvento()">Criar Evento</button>
+                    </div>
+                </div>
+
+                <!-- Eventos Ativos -->
+                <div class="card">
+                    <h3>📋 Eventos Ativos</h3>
+                    <div id="eventosAtivos" class="table-responsive"></div>
+                </div>
+
+                <!-- Relatórios -->
+                <div class="card export-section">
+                    <h3>📊 Relatórios</h3>
+                    <button class="btn btn-warning" onclick="exportarRelatorio()">Exportar Relatório do Evento Atual</button>
+                    <button class="btn btn-primary" onclick="exportarRelatorioCompleto()">Exportar Relatório Completo</button>
+                </div>
+            </div>
+
+            <!-- User Panel -->
+            <div id="userPanel" class="hidden">
+                <div class="card">
+                    <h3>📝 Registrar Abordagem</h3>
+                    <div id="eventoAtualInfo" class="location-info"></div>
+                    
+                    <div class="grid">
+                        <div>
+                            <div class="form-group">
+                                <label>Placa do Veículo:</label>
+                                <input type="text" id="placaVeiculo" placeholder="AAA-0000" style="text-transform: uppercase;">
+                            </div>
+                            <div class="form-group">
+                                <label>CPF do Condutor:</label>
+                                <input type="text" id="cpfCondutor" placeholder="000.000.000-00">
+                            </div>
+                            <div class="form-group">
+                                <label>CNH do Condutor:</label>
+                                <input type="text" id="cnhCondutor" placeholder="Número da CNH">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label>Foi autuado?</label>
+                                <select id="foiAutuado" onchange="toggleAutuacao()">
+                                    <option value="nao">Não</option>
+                                    <option value="sim">Sim</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Teste do etilômetro:</label>
+                                <select id="testeEtilometro" onchange="toggleRecusaTeste()">
+                                    <option value="nao_realizado">Não realizado</option>
+                                    <option value="realizado_negativo">Realizado - Negativo</option>
+                                    <option value="realizado_positivo">Realizado - Positivo</option>
+                                    <option value="recusou">Recusou o teste</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Veículo removido?</label>
+                                <select id="veiculoRemovido">
+                                    <option value="nao">Não</option>
+                                    <option value="sim">Sim</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="artigosSection" class="hidden">
+                        <div class="form-group">
+                            <label>Artigos do CTB aplicados:</label>
+                            <div id="artigosCTB" class="checkbox-group"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Observações:</label>
+                        <textarea id="observacoes" rows="4" placeholder="Digite observações adicionais..."></textarea>
+                    </div>
+
+                    <button class="btn btn-success" onclick="registrarAbordagem()">✅ Registrar Abordagem</button>
+                </div>
+
+                <!-- Abordagens Registradas -->
+                <div class="card">
+                    <h3>📊 Abordagens do Evento Atual</h3>
+                    <div id="abordagensLista" class="table-responsive"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dados do sistema (simulando banco de dados)
+        let sistemaData = {
+            usuarios: {},
+            eventos: [],
+            abordagens: [],
+            eventoAtivo: null,
+            usuarioLogado: null,
+            localizacaoAtual: null
+        };
+
+        // Matrículas autorizadas no sistema
+        const matriculasAutorizadas = {
+            '257': { isAdmin: true, nome: 'Administrador' },
+            '100': { isAdmin: false, nome: 'Operador 1' },
+            '101': { isAdmin: false, nome: 'Operador 2' }
+        };
+
+        // Função para inicializar usuários base (sem senhas)
+        function inicializarUsuariosBase() {
+            // Verificar se já foram inicializados
+            if (Object.keys(sistemaData.usuarios).length > 0) {
+                console.log('👥 Usuários já inicializados.');
+                return;
+            }
+
+            // Criar registros base para matrículas autorizadas (sem senha)
+            for (let matricula in matriculasAutorizadas) {
+                const config = matriculasAutorizadas[matricula];
+                sistemaData.usuarios[matricula] = {
+                    senha: null, // Sem senha inicial
+                    ativo: true,
+                    isAdmin: config.isAdmin,
+                    primeiroAcesso: true,
+                    nome: config.nome,
+                    criadoEm: new Date(),
+                    criadoPor: 'sistema'
+                };
+            }
+
+            console.log('✅ Sistema inicializado. Usuários devem definir senhas no primeiro acesso.');
+        }
+
+        // Função para configurar usuário administrador manualmente (para usar após definir senha)
+        function configurarAdminManual(matricula, senha) {
+            const senhaHash = CryptoJS.SHA256(senha).toString();
+            sistemaData.usuarios[matricula] = {
+                senha: senhaHash,
+                ativo: true,
+                isAdmin: true,
+                primeiroAcesso: false, // Senha já foi definida
+                criadoEm: new Date(),
+                criadoPor: 'manual',
+                senhaAlteradaEm: new Date()
+            };
+            
+            // Marcar que o admin foi configurado manualmente
+            localStorage.setItem('adminConfigurado', 'true');
+            console.log(`✅ Administrador ${matricula} configurado manualmente.`);
+            
+            return true;
+        }
+
+        // Função para gerar senha temporária segura
+        function gerarSenhaTemporaria() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+            let senha = '';
+            for (let i = 0; i < 8; i++) {
+                senha += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return senha;
+        }
+
+        // Função para inicializar usuários padrão com senhas temporárias
+        function inicializarUsuariosPadrao() {
+            // Verificar se já foram inicializados (se o sistema já tem usuários cadastrados)
+            if (Object.keys(sistemaData.usuarios).length > 0) {
+                console.log('👥 Usuários já inicializados anteriormente.');
+                return;
+            }
+
+            // Verificar se existe configuração manual do admin no localStorage
+            const adminManual = localStorage.getItem('adminConfigurado');
+            if (adminManual) {
+                console.log('👑 Administrador já foi configurado manualmente.');
+                return;
+            }
+
+            const usuariosPadrao = [
+                { matricula: '257', isAdmin: true },
+                { matricula: '100', isAdmin: false },
+                { matricula: '101', isAdmin: false }
+            ];
+
+            console.log('🔐 Inicializando senhas de primeiro acesso:');
+            usuariosPadrao.forEach(user => {
+                const senhaTemp = gerarSenhaTemporaria();
+                const senhaHash = CryptoJS.SHA256(senhaTemp).toString();
+                
+                sistemaData.usuarios[user.matricula] = {
+                    senha: senhaHash,
+                    ativo: true,
+                    isAdmin: user.isAdmin,
+                    primeiroAcesso: true,
+                    senhaTemporaria: senhaTemp,
+                    criadoEm: new Date(),
+                    criadoPor: 'sistema'
+                };
+                
+                console.log(`📋 Matrícula ${user.matricula}: ${senhaTemp}`);
+            });
+            
+            console.log('⚠️ IMPORTANTE: Anote essas senhas! Elas não serão exibidas novamente.');
+            console.log('💡 No primeiro login, será solicitada a troca da senha.');
+            
+            // Exibir alerta com as credenciais iniciais apenas na primeira vez
+            const credenciais = usuariosPadrao.map(user => 
+                `Matrícula ${user.matricula}: ${sistemaData.usuarios[user.matricula].senhaTemporaria}`
+            ).join('\n');
+            
+            alert(`🔐 CREDENCIAIS DE PRIMEIRO ACESSO\n\n${credenciais}\n\n⚠️ IMPORTANTE:\n• Anote essas senhas temporárias\n• Será obrigatório trocar no primeiro login\n• Esta mensagem não aparecerá novamente`);
+        }
+
+        // Artigos do CTB que geram multas
+        const artigosCTB = {
+            '161': 'Estacionar ou parar em local/horário proibido por sinalização',
+            '162': 'Parar ou estacionar veículo na pista de rolamento das estradas',
+            '163': 'Transitar em marcha à ré, salvo na distância necessária',
+            '165': 'Dirigir ameaçando pedestres ou veículos',
+            '165-A': 'Recusar-se a ser submetido a teste do etilômetro',
+            '169': 'Dirigir sem atenção ou sem cuidados indispensáveis',
+            '170': 'Dirigir ameaçando outros veículos',
+            '171': 'Usar equipamento que prejudique a audição',
+            '173': 'Disputar corrida por espírito de emulação',
+            '174': 'Promover ou participar de competição esportiva',
+            '175': 'Utilizar-se das vias para demonstrar ou exibir manobras perigosas',
+            '176': 'Efetuar conversão proibida pela sinalização',
+            '177': 'Estacionar na contramão de direção',
+            '178': 'Estacionar afastado da guia da calçada',
+            '179': 'Estacionar em desacordo com a regulamentação',
+            '180': 'Parar em local proibido pela sinalização',
+            '181': 'Estacionar em locais e horários proibidos',
+            '192': 'Transitar em velocidade superior à máxima permitida até 20%',
+            '201': 'Deixar de guardar distância lateral de veículos',
+            '203': 'Ultrapassar pela contramão em locais proibidos',
+            '208': 'Avançar o sinal vermelho do semáforo',
+            '209': 'Transitar sobre calçadas, passeios ou canteiros',
+            '218': 'Transitar em velocidade superior à máxima permitida de 20% a 50%',
+            '219': 'Transitar em velocidade superior à máxima permitida acima de 50%',
+            '230': 'Conduzir veículo com CNH ou PPD cassados',
+            '244': 'Conduzir motocicleta, motoneta e ciclomotor sem capacete',
+            '252': 'Dirigir veículo com defeito no sistema de iluminação',
+            '253': 'Dirigir veículo que não ofereça segurança',
+            '254': 'Conduzir veículo com equipamento obrigatório ineficiente',
+            '255': 'Conduzir veículo com equipamento obrigatório violado',
+            '261': 'Acionar buzina em local ou horário proibido',
+            '277': 'Deixar de reduzir velocidade quando se aproximar de passagem de nível',
+            '306': 'Avançar sinal vermelho do semáforo ou de parada obrigatória',
+            '307': 'Desobedecer às ordens emanadas da autoridade competente de trânsito'
+        };
+
+        // Função de login
+        function login() {
+            const matricula = document.getElementById('matricula').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+
+            if (!matricula) {
+                alert('❌ Digite sua matrícula!');
+                return;
+            }
+
+            // Verificar se a matrícula é autorizada
+            if (!matriculasAutorizadas[matricula]) {
+                alert('❌ Matrícula não autorizada no sistema!');
+                return;
+            }
+
+            const usuario = sistemaData.usuarios[matricula];
+
+            // Se é primeiro acesso (usuário não tem senha definida)
+            if (!usuario || usuario.senha === null || usuario.primeiroAcesso) {
+                if (!senha) {
+                    alert('🔐 PRIMEIRO ACESSO\n\nDefina sua senha para acessar o sistema.');
+                    return;
+                }
+
+                if (senha.length < 6) {
+                    alert('❌ A senha deve ter pelo menos 6 caracteres!');
+                    return;
+                }
+
+                const confirmaSenha = prompt('🔑 Confirme sua nova senha:');
+                if (senha !== confirmaSenha) {
+                    alert('❌ As senhas não coincidem!');
+                    return;
+                }
+
+                // Criar ou atualizar usuário com a nova senha
+                const senhaHash = CryptoJS.SHA256(senha).toString();
+                const config = matriculasAutorizadas[matricula];
+                
+                sistemaData.usuarios[matricula] = {
+                    senha: senhaHash,
+                    ativo: true,
+                    isAdmin: config.isAdmin,
+                    primeiroAcesso: false,
+                    nome: config.nome,
+                    criadoEm: usuario ? usuario.criadoEm : new Date(),
+                    criadoPor: usuario ? usuario.criadoPor : 'primeiro_acesso',
+                    senhaDefinidaEm: new Date()
+                };
+
+                alert('✅ Senha definida com sucesso! Fazendo login...');
+            } else {
+                // Login normal - verificar senha
+                if (!senha) {
+                    alert('❌ Digite sua senha!');
+                    return;
+                }
+
+                const senhaHash = CryptoJS.SHA256(senha).toString();
+                if (usuario.senha !== senhaHash) {
+                    alert('❌ Senha incorreta!');
+                    return;
+                }
+            }
+
+            if (!sistemaData.usuarios[matricula].ativo) {
+                alert('❌ Usuário inativo. Entre em contato com o administrador.');
+                return;
+            }
+
+            // Verificar se usuário não-admin tem evento ativo
+            if (!sistemaData.usuarios[matricula].isAdmin && !sistemaData.eventoAtivo) {
+                alert('⚠️ Nenhum evento de blitz ativo. Aguarde o administrador criar um evento.');
+                return;
+            }
+
+            sistemaData.usuarioLogado = {
+                matricula: matricula,
+                isAdmin: sistemaData.usuarios[matricula].isAdmin
+            };
+
+            mostrarDashboard();
+        }
+
+        // Função de logout
+        function logout() {
+            sistemaData.usuarioLogado = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('matricula').value = '';
+            document.getElementById('senha').value = '';
+        }
+
+        // Mostrar dashboard após login
+        function mostrarDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+
+            const userInfo = document.getElementById('userInfo');
+            const eventStatus = document.getElementById('eventStatus');
+
+            userInfo.textContent = `Matrícula: ${sistemaData.usuarioLogado.matricula}`;
+            
+            if (sistemaData.usuarioLogado.isAdmin) {
+                userInfo.textContent += ' (👑 Administrador)';
+                document.getElementById('adminPanel').classList.remove('hidden');
+                document.getElementById('userPanel').classList.add('hidden');
+                carregarEstatisticas();
+                carregarUsuarios();
+                carregarMatriculasDisponiveis();
+                carregarEventosAtivos();
+            } else {
+                userInfo.textContent += ' (👮 Operador)';
+                document.getElementById('adminPanel').classList.add('hidden');
+                document.getElementById('userPanel').classList.remove('hidden');
+                carregarArtigosCTB();
+                mostrarEventoAtual();
+                carregarAbordagens();
+            }
+
+            atualizarStatusEvento();
+        }
+
+        // Atualizar status do evento
+        function atualizarStatusEvento() {
+            const eventStatus = document.getElementById('eventStatus');
+            if (sistemaData.eventoAtivo) {
+                eventStatus.textContent = `✅ Evento Ativo: ${sistemaData.eventoAtivo.nome}`;
+                eventStatus.className = 'badge status-active';
+            } else {
+                eventStatus.textContent = '❌ Nenhum evento ativo';
+                eventStatus.className = 'badge status-inactive';
+            }
+        }
+
+        // Carregar estatísticas (admin)
+        function carregarEstatisticas() {
+            const totalUsuarios = Object.keys(sistemaData.usuarios).length;
+            const totalEventos = sistemaData.eventos.length;
+            const totalAbordagens = sistemaData.abordagens.length;
+
+            document.getElementById('totalUsuarios').textContent = totalUsuarios;
+            document.getElementById('totalEventos').textContent = totalEventos;
+            document.getElementById('totalAbordagens').textContent = totalAbordagens;
+        }
+
+        // Cadastrar novo usuário
+        function cadastrarUsuario() {
+            const matricula = document.getElementById('novaMatricula').value.trim();
+
+            if (!matricula) {
+                alert('❌ Preencha a matrícula!');
+                return;
+            }
+
+            if (matricula.length < 3) {
+                alert('❌ Matrícula deve ter pelo menos 3 caracteres!');
+                return;
+            }
+
+            if (sistemaData.usuarios[matricula]) {
+                alert('❌ Matrícula já existe!');
+                return;
+            }
+
+            // Criar usuário sem senha (definirá no primeiro acesso)
+            sistemaData.usuarios[matricula] = {
+                senha: null,
+                ativo: true,
+                isAdmin: false,
+                primeiroAcesso: true,
+                nome: `Operador ${matricula}`,
+                criadoEm: new Date(),
+                criadoPor: sistemaData.usuarioLogado.matricula
+            };
+
+            // Adicionar à lista de matrículas autorizadas
+            matriculasAutorizadas[matricula] = { isAdmin: false, nome: `Operador ${matricula}` };
+
+            document.getElementById('novaMatricula').value = '';
+            
+            carregarUsuarios();
+            carregarMatriculasDisponiveis();
+            carregarEstatisticas();
+            
+            alert(`✅ Usuário ${matricula} cadastrado com sucesso!\n\n🔑 O usuário deve definir sua própria senha no primeiro acesso.\n\n💡 Informe ao usuário que ele deve:\n1. Acessar o sistema com sua matrícula\n2. Criar uma senha de pelo menos 6 caracteres`);
+        }
+
+        // Carregar lista de usuários
+        function carregarUsuarios() {
+            const container = document.getElementById('usuariosList');
+            let html = '<h4>👥 Usuários Cadastrados:</h4><table><tr><th>Matrícula</th><th>Status</th><th>Tipo</th><th>Senha Definida</th><th>Criado em</th><th>Ações</th></tr>';
+            
+            for (let matricula in sistemaData.usuarios) {
+                const usuario = sistemaData.usuarios[matricula];
+                const dataCriacao = usuario.criadoEm ? new Date(usuario.criadoEm).toLocaleDateString('pt-BR') : '-';
+                const senhaDefinida = usuario.senha ? '✅ Sim' : '🔑 Pendente';
+                const senhaClass = usuario.senha ? 'status-active' : 'status-inactive';
+                
+                html += `<tr>
+                    <td>${matricula}</td>
+                    <td class="${usuario.ativo ? 'status-active' : 'status-inactive'}">
+                        ${usuario.ativo ? '✅ Ativo' : '❌ Inativo'}
+                    </td>
+                    <td>${usuario.isAdmin ? '👑 Admin' : '👮 Operador'}</td>
+                    <td class="${senhaClass}">${senhaDefinida}</td>
+                    <td>${dataCriacao}</td>
+                    <td>
+                        ${matricula !== '257' ? 
+                            `<button class="btn ${usuario.ativo ? 'btn-danger' : 'btn-success'}" onclick="toggleUsuario('${matricula}')">
+                                ${usuario.ativo ? 'Desativar' : 'Ativar'}
+                            </button>
+                            ${!usuario.senha ? 
+                                `<button class="btn btn-warning" onclick="resetarSenha('${matricula}')" style="margin-left: 5px;">
+                                    🔄 Resetar
+                                </button>` : ''
+                            }` : 
+                            '<span>🔒 Protegido</span>'
+                        }
+                    </td>
+                </tr>`;
+            }
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // Resetar senha de usuário (permite que defina nova senha no próximo login)
+        function resetarSenha(matricula) {
+            const usuario = sistemaData.usuarios[matricula];
+            if (!usuario) return;
+
+            if (confirm(`🔄 Resetar senha do usuário ${matricula}?\n\nO usuário precisará definir uma nova senha no próximo acesso.`)) {
+                usuario.senha = null;
+                usuario.primeiroAcesso = true;
+                usuario.senhaResetadaEm = new Date();
+                usuario.senhaResetadaPor = sistemaData.usuarioLogado.matricula;
+                
+                carregarUsuarios();
+                alert(`✅ Senha resetada!\n\nO usuário ${matricula} deve:\n1. Fazer login normalmente\n2. Definir uma nova senha no acesso`);
+            }
+        }
+
+        // Alternar status do usuário
+        function toggleUsuario(matricula) {
+            const usuario = sistemaData.usuarios[matricula];
+            const acao = usuario.ativo ? 'desativar' : 'ativar';
+            
+            if (confirm(`Tem certeza que deseja ${acao} o usuário ${matricula}?`)) {
+                usuario.ativo = !usuario.ativo;
+                carregarUsuarios();
+                carregarMatriculasDisponiveis();
+                alert(`✅ Usuário ${matricula} ${usuario.ativo ? 'ativado' : 'desativado'} com sucesso!`);
+            }
+        }
+
+        // Carregar matrículas disponíveis para eventos
+        function carregarMatriculasDisponiveis() {
+            const container = document.getElementById('matriculasDisponiveis');
+            let html = '';
+            
+            const usuariosAtivos = Object.keys(sistemaData.usuarios).filter(matricula => {
+                const usuario = sistemaData.usuarios[matricula];
+                return !usuario.isAdmin && usuario.ativo;
+            });
+
+            if (usuariosAtivos.length === 0) {
+                html = '<p>❌ Nenhum operador ativo disponível</p>';
+            } else {
+                usuariosAtivos.forEach(matricula => {
+                    html += `
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mat_${matricula}" value="${matricula}">
+                            <label for="mat_${matricula}">👮 Matrícula ${matricula}</label>
+                        </div>
+                    `;
+                });
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // Obter localização GPS
+        function obterLocalizacao() {
+            const infoDiv = document.getElementById('localizacaoInfo');
+            infoDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Obtendo localização...</p></div>';
+            infoDiv.classList.remove('hidden');
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        sistemaData.localizacaoAtual = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            precisao: position.coords.accuracy,
+                            timestamp: new Date()
+                        };
+                        
+                        infoDiv.innerHTML = `
+                            <h4>📍 Localização GPS Obtida:</h4>
+                            <p><strong>Latitude:</strong> ${position.coords.latitude.toFixed(6)}</p>
+                            <p><strong>Longitude:</strong> ${position.coords.longitude.toFixed(6)}</p>
+                            <p><strong>Precisão:</strong> ±${position.coords.accuracy.toFixed(0)}m</p>
+                            <p><strong>Horário:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+                            <p style="color: #4ade80;">✅ Localização capturada com sucesso!</p>
+                        `;
+                    },
+                    function(error) {
+                        let mensagemErro = '';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                mensagemErro = 'Permissão de localização negada pelo usuário.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                mensagemErro = 'Informações de localização não disponíveis.';
+                                break;
+                            case error.TIMEOUT:
+                                mensagemErro = 'Tempo limite para obter localização excedido.';
+                                break;
+                            default:
+                                mensagemErro = 'Erro desconhecido ao obter localização.';
+                                break;
+                        }
+                        
+                        infoDiv.innerHTML = `
+                            <h4>❌ Erro na Geolocalização:</h4>
+                            <p style="color: #f87171;">${mensagemErro}</p>
+                            <p>💡 Por favor, digite o local manualmente no campo abaixo.</p>
+                        `;
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            } else {
+                infoDiv.innerHTML = `
+                    <h4>❌ Geolocalização não suportada</h4>
+                    <p style="color: #f87171;">Seu navegador não suporta geolocalização.</p>
+                    <p>💡 Por favor, digite o local manualmente.</p>
+                `;
+            }
+        }
+
+        // Criar novo evento
+        function criarEvento() {
+            const nome = document.getElementById('nomeBlitz').value.trim();
+            const data = document.getElementById('dataBlitz').value;
+            const hora = document.getElementById('horaBlitz').value;
+            const local = document.getElementById('localBlitz').value.trim();
+            
+            if (!data || !hora) {
+                alert('❌ Preencha data e hora da blitz!');
+                return;
+            }
+
+            // Verificar se a data/hora não é no passado
+            const dataHoraEvento = new Date(data + 'T' + hora);
+            const agora = new Date();
+            
+            if (dataHoraEvento < agora) {
+                alert('⚠️ A data e hora do evento não podem ser no passado!');
+                return;
+            }
+
+            const matriculasSelecionadas = [];
+            const checkboxes = document.querySelectorAll('#matriculasDisponiveis input[type="checkbox"]:checked');
+            checkboxes.forEach(cb => matriculasSelecionadas.push(cb.value));
+
+            if (matriculasSelecionadas.length === 0) {
+                alert('❌ Selecione pelo menos uma matrícula para participar!');
+                return;
+            }
+
+            // Encerrar evento anterior se houver
+            if (sistemaData.eventoAtivo) {
+                sistemaData.eventoAtivo.ativo = false;
+            }
+
+            const evento = {
+                id: Date.now(),
+                nome: nome,
+                data: data,
+                hora: hora,
+                local: local || (sistemaData.localizacaoAtual ? 
+                    `GPS: ${sistemaData.localizacaoAtual.latitude.toFixed(6)}, ${sistemaData.localizacaoAtual.longitude.toFixed(6)}` : 
+                    'Local não informado'),
+                localizacao: sistemaData.localizacaoAtual,
+                matriculas: matriculasSelecionadas,
+                ativo: true,
+                criadoPor: sistemaData.usuarioLogado.matricula,
+                criadoEm: new Date(),
+                abordagens: 0
+            };
+
+            sistemaData.eventos.push(evento);
+            sistemaData.eventoAtivo = evento;
+
+            // Limpar formulário
+            document.getElementById('dataBlitz').value = '';
+            document.getElementById('horaBlitz').value = '';
+            document.getElementById('localBlitz').value = '';
+            document.getElementById('localizacaoInfo').classList.add('hidden');
+            document.querySelectorAll('#matriculasDisponiveis input[type="checkbox"]').forEach(cb => cb.checked = false);
+            sistemaData.localizacaoAtual = null;
+
+            carregarEventosAtivos();
+            carregarEstatisticas();
+            atualizarStatusEvento();
+            alert('✅ Evento criado e ativado com sucesso!');
+        }
+
+        // Carregar eventos ativos
+        function carregarEventosAtivos() {
+            const container = document.getElementById('eventosAtivos');
+            const eventosAtivos = sistemaData.eventos.filter(e => e.ativo);
+            
+            if (eventosAtivos.length === 0) {
+                container.innerHTML = '<p>❌ Nenhum evento ativo.</p>';
+                return;
+            }
+
+            let html = '<table><tr><th>Nome</th><th>Data/Hora</th><th>Local</th><th>Matrículas</th><th>Abordagens</th><th>Ações</th></tr>';
+            
+            eventosAtivos.forEach(evento => {
+                const abordagensEvento = sistemaData.abordagens.filter(a => a.eventoId === evento.id).length;
+                html += `<tr>
+                    <td>🚨 ${evento.nome}</td>
+                    <td>📅 ${evento.data} ⏰ ${evento.hora}</td>
+                    <td>📍 ${evento.local}</td>
+                    <td>👮 ${evento.matriculas.join(', ')}</td>
+                    <td><span class="status-active">${abordagensEvento}</span></td>
+                    <td>
+                        <button class="btn btn-danger" onclick="encerrarEvento(${evento.id})">
+                            ⏹️ Encerrar
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // Encerrar evento
+        function encerrarEvento(eventoId) {
+            const evento = sistemaData.eventos.find(e => e.id === eventoId);
+            if (!evento) return;
+
+            const abordagensEvento = sistemaData.abordagens.filter(a => a.eventoId === eventoId).length;
+            
+            if (confirm(`🔚 Tem certeza que deseja encerrar o evento "${evento.nome}"?\n\n📊 Abordagens registradas: ${abordagensEvento}\n⚠️ Esta ação não pode ser desfeita.`)) {
+                evento.ativo = false;
+                evento.encerradoEm = new Date();
+                evento.encerradoPor = sistemaData.usuarioLogado.matricula;
+                
+                if (sistemaData.eventoAtivo && sistemaData.eventoAtivo.id === eventoId) {
+                    sistemaData.eventoAtivo = null;
+                }
+                
+                carregarEventosAtivos();
+                atualizarStatusEvento();
+                alert(`✅ Evento "${evento.nome}" encerrado com sucesso!\n📊 Total de abordagens: ${abordagensEvento}`);
+            }
+        }
+
+        // Mostrar evento atual (para operadores)
+        function mostrarEventoAtual() {
+            const container = document.getElementById('eventoAtualInfo');
+            if (sistemaData.eventoAtivo) {
+                const abordagensEvento = sistemaData.abordagens.filter(a => a.eventoId === sistemaData.eventoAtivo.id).length;
+                container.innerHTML = `
+                    <h4>🚨 Evento Ativo: ${sistemaData.eventoAtivo.nome}</h4>
+                    <p><strong>📅 Data:</strong> ${sistemaData.eventoAtivo.data} <strong>⏰ Hora:</strong> ${sistemaData.eventoAtivo.hora}</p>
+                    <p><strong>📍 Local:</strong> ${sistemaData.eventoAtivo.local}</p>
+                    <p><strong>👮 Matrículas Participantes:</strong> ${sistemaData.eventoAtivo.matriculas.join(', ')}</p>
+                    <p><strong>📊 Abordagens Registradas:</strong> <span class="status-active">${abordagensEvento}</span></p>
+                `;
+            } else {
+                container.innerHTML = '<p>❌ Nenhum evento ativo no momento.</p>';
+            }
+        }
+
+        // Carregar artigos do CTB
+        function carregarArtigosCTB() {
+            const container = document.getElementById('artigosCTB');
+            let html = '';
+            
+            for (let artigo in artigosCTB) {
+                html += `
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="art_${artigo}" value="${artigo}">
+                        <label for="art_${artigo}">📜 Art. ${artigo} - ${artigosCTB[artigo]}</label>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        // Toggle seção de autuação
+        function toggleAutuacao() {
+            const foiAutuado = document.getElementById('foiAutuado').value;
+            const artigosSection = document.getElementById('artigosSection');
+            
+            if (foiAutuado === 'sim') {
+                artigosSection.classList.remove('hidden');
+            } else {
+                artigosSection.classList.add('hidden');
+                // Desmarcar todos os artigos
+                document.querySelectorAll('#artigosCTB input[type="checkbox"]').forEach(cb => cb.checked = false);
+            }
+        }
+
+        // Toggle recusa de teste
+        function toggleRecusaTeste() {
+            const testeEtilometro = document.getElementById('testeEtilometro').value;
+            const foiAutuado = document.getElementById('foiAutuado');
+            const artigosSection = document.getElementById('artigosSection');
+            
+            if (testeEtilometro === 'recusou' || testeEtilometro === 'nao_realizado') {
+                // Marcar automaticamente como autuado
+                foiAutuado.value = 'sim';
+                artigosSection.classList.remove('hidden');
+                
+                // Marcar automaticamente o artigo 165-A para recusa
+                if (testeEtilometro === 'recusou') {
+                    const checkbox165A = document.getElementById('art_165-A');
+                    if (checkbox165A) {
+                        checkbox165A.checked = true;
+                    }
+                }
+            }
+        }
+
+        // Registrar abordagem
+        function registrarAbordagem() {
+            const placaVeiculo = document.getElementById('placaVeiculo').value.trim().toUpperCase();
+            const cpfCondutor = document.getElementById('cpfCondutor').value.trim();
+            const cnhCondutor = document.getElementById('cnhCondutor').value.trim();
+            const foiAutuado = document.getElementById('foiAutuado').value;
+            const testeEtilometro = document.getElementById('testeEtilometro').value;
+            const veiculoRemovido = document.getElementById('veiculoRemovido').value;
+            const observacoes = document.getElementById('observacoes').value.trim();
+
+            // Validações
+            if (!placaVeiculo) {
+                alert('❌ Informe a placa do veículo!');
+                return;
+            }
+
+            if (!cpfCondutor && !cnhCondutor) {
+                alert('❌ Informe pelo menos o CPF ou CNH do condutor!');
+                return;
+            }
+
+            // Validar formato da placa
+            const placaRegex = /^[A-Z]{3}-\d{4}$/;
+            if (!placaRegex.test(placaVeiculo)) {
+                alert('❌ Formato de placa inválido! Use o formato: ABC-1234');
+                return;
+            }
+
+            if (!sistemaData.eventoAtivo) {
+                alert('❌ Nenhum evento ativo para registrar abordagem!');
+                return;
+            }
+
+            // Verificar se o operador está autorizado para este evento
+            if (!sistemaData.eventoAtivo.matriculas.includes(sistemaData.usuarioLogado.matricula)) {
+                alert('❌ Você não está autorizado a registrar abordagens neste evento!');
+                return;
+            }
+
+            // Coletar artigos selecionados
+            const artigosSelecionados = [];
+            if (foiAutuado === 'sim') {
+                document.querySelectorAll('#artigosCTB input[type="checkbox"]:checked').forEach(cb => {
+                    artigosSelecionados.push({
+                        artigo: cb.value,
+                        descricao: artigosCTB[cb.value]
+                    });
+                });
+
+                if (artigosSelecionados.length === 0) {
+                    alert('❌ Se foi autuado, selecione pelo menos um artigo do CTB!');
+                    return;
+                }
+            }
+
+            const abordagem = {
+                id: Date.now(),
+                eventoId: sistemaData.eventoAtivo.id,
+                placaVeiculo: placaVeiculo,
+                cpfCondutor: cpfCondutor,
+                cnhCondutor: cnhCondutor,
+                foiAutuado: foiAutuado,
+                testeEtilometro: testeEtilometro,
+                veiculoRemovido: veiculoRemovido,
+                artigosAplicados: artigosSelecionados,
+                observacoes: observacoes,
+                registradoPor: sistemaData.usuarioLogado.matricula,
+                registradoEm: new Date(),
+                localizacao: sistemaData.eventoAtivo.localizacao
+            };
+
+            sistemaData.abordagens.push(abordagem);
+
+            // Limpar formulário
+            limparFormularioAbordagem();
+
+            // Atualizar displays
+            carregarAbordagens();
+            mostrarEventoAtual();
+            
+            alert('✅ Abordagem registrada com sucesso!');
+        }
+
+        // Limpar formulário de abordagem
+        function limparFormularioAbordagem() {
+            document.getElementById('placaVeiculo').value = '';
+            document.getElementById('cpfCondutor').value = '';
+            document.getElementById('cnhCondutor').value = '';
+            document.getElementById('foiAutuado').value = 'nao';
+            document.getElementById('testeEtilometro').value = 'nao_realizado';
+            document.getElementById('veiculoRemovido').value = 'nao';
+            document.getElementById('observacoes').value = '';
+            document.getElementById('artigosSection').classList.add('hidden');
+            document.querySelectorAll('#artigosCTB input[type="checkbox"]').forEach(cb => cb.checked = false);
+        }
+
+        // Carregar abordagens do evento atual
+        function carregarAbordagens() {
+            const container = document.getElementById('abordagensLista');
+            
+            if (!sistemaData.eventoAtivo) {
+                container.innerHTML = '<p>❌ Nenhum evento ativo.</p>';
+                return;
+            }
+
+            const abordagensEvento = sistemaData.abordagens.filter(a => a.eventoId === sistemaData.eventoAtivo.id);
+            
+            if (abordagensEvento.length === 0) {
+                container.innerHTML = '<p>📝 Nenhuma abordagem registrada neste evento ainda.</p>';
+                return;
+            }
+
+            // Estatísticas rápidas
+            const totalAutuados = abordagensEvento.filter(a => a.foiAutuado === 'sim').length;
+            const totalTestesPositivos = abordagensEvento.filter(a => a.testeEtilometro === 'realizado_positivo').length;
+            const totalRecusas = abordagensEvento.filter(a => a.testeEtilometro === 'recusou').length;
+            const totalRemocoes = abordagensEvento.filter(a => a.veiculoRemovido === 'sim').length;
+
+            let html = `
+                <div class="stats-section" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div class="stats-card">
+                        <div class="stats-number">${abordagensEvento.length}</div>
+                        <div>Total</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${totalAutuados}</div>
+                        <div>Autuados</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${totalTestesPositivos}</div>
+                        <div>Testes +</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${totalRecusas}</div>
+                        <div>Recusas</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${totalRemocoes}</div>
+                        <div>Remoções</div>
+                    </div>
+                </div>
+                
+                <table>
+                    <tr>
+                        <th>Placa</th>
+                        <th>Condutor</th>
+                        <th>Autuado</th>
+                        <th>Etilômetro</th>
+                        <th>Removido</th>
+                        <th>Operador</th>
+                        <th>Data/Hora</th>
+                        <th>Ações</th>
+                    </tr>
+            `;
+
+            // Ordenar por data mais recente
+            abordagensEvento.sort((a, b) => new Date(b.registradoEm) - new Date(a.registradoEm));
+
+            abordagensEvento.forEach(abordagem => {
+                const condutor = abordagem.cpfCondutor || abordagem.cnhCondutor || 'Não informado';
+                html += `<tr>
+                    <td>🚗 ${abordagem.placaVeiculo}</td>
+                    <td>${condutor}</td>
+                    <td class="${abordagem.foiAutuado === 'sim' ? 'status-inactive' : 'status-active'}">
+                        ${abordagem.foiAutuado === 'sim' ? '❌ Sim' : '✅ Não'}
+                    </td>
+                    <td>${getTesteEtilometroIcon(abordagem.testeEtilometro)}</td>
+                    <td>${abordagem.veiculoRemovido === 'sim' ? '🚛 Sim' : '✅ Não'}</td>
+                    <td>👮 ${abordagem.registradoPor}</td>
+                    <td>${new Date(abordagem.registradoEm).toLocaleString('pt-BR')}</td>
+                    <td>
+                        <button class="btn btn-primary" onclick="verDetalhes(${abordagem.id})">
+                            👁️ Detalhes
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // Obter ícone do teste do etilômetro
+        function getTesteEtilometroIcon(valor) {
+            switch(valor) {
+                case 'nao_realizado': return '⚪ Não realizado';
+                case 'realizado_negativo': return '✅ Negativo';
+                case 'realizado_positivo': return '🔴 Positivo';
+                case 'recusou': return '❌ Recusou';
+                default: return valor;
+            }
+        }
+
+        // Ver detalhes da abordagem
+        function verDetalhes(abordagemId) {
+            const abordagem = sistemaData.abordagens.find(a => a.id === abordagemId);
+            if (!abordagem) return;
+
+            let detalhes = `🚔 DETALHES DA ABORDAGEM #${abordagem.id}\n\n`;
+            detalhes += `📋 INFORMAÇÕES GERAIS:\n`;
+            detalhes += `🚗 Placa: ${abordagem.placaVeiculo}\n`;
+            detalhes += `👤 CPF: ${abordagem.cpfCondutor || 'Não informado'}\n`;
+            detalhes += `🆔 CNH: ${abordagem.cnhCondutor || 'Não informado'}\n`;
+            detalhes += `👮 Registrado por: Matrícula ${abordagem.registradoPor}\n`;
+            detalhes += `📅 Data/Hora: ${new Date(abordagem.registradoEm).toLocaleString('pt-BR')}\n\n`;
+            
+            detalhes += `⚖️ SITUAÇÃO LEGAL:\n`;
+            detalhes += `${abordagem.foiAutuado === 'sim' ? '❌' : '✅'} Foi autuado: ${abordagem.foiAutuado === 'sim' ? 'Sim' : 'Não'}\n`;
+            detalhes += `🍺 Teste etilômetro: ${getTesteEtilometroText(abordagem.testeEtilometro)}\n`;
+            detalhes += `🚛 Veículo removido: ${abordagem.veiculoRemovido === 'sim' ? 'Sim' : 'Não'}\n`;
+
+            if (abordagem.artigosAplicados && abordagem.artigosAplicados.length > 0) {
+                detalhes += `\n📜 ARTIGOS DO CTB APLICADOS:\n`;
+                abordagem.artigosAplicados.forEach(artigo => {
+                    detalhes += `• Art. ${artigo.artigo} - ${artigo.descricao}\n`;
+                });
+            }
+
+            if (abordagem.observacoes) {
+                detalhes += `\n💭 OBSERVAÇÕES:\n${abordagem.observacoes}\n`;
+            }
+
+            if (abordagem.localizacao) {
+                detalhes += `\n📍 LOCALIZAÇÃO GPS:\n`;
+                detalhes += `Latitude: ${abordagem.localizacao.latitude.toFixed(6)}\n`;
+                detalhes += `Longitude: ${abordagem.localizacao.longitude.toFixed(6)}\n`;
+                detalhes += `Precisão: ±${abordagem.localizacao.precisao?.toFixed(0) || 0}m\n`;
+            }
+
+            alert(detalhes);
+        }
+
+        // Obter texto do teste do etilômetro
+        function getTesteEtilometroText(valor) {
+            switch(valor) {
+                case 'nao_realizado': return 'Não realizado';
+                case 'realizado_negativo': return 'Realizado - Negativo';
+                case 'realizado_positivo': return 'Realizado - Positivo';
+                case 'recusou': return 'Recusou o teste';
+                default: return valor;
+            }
+        }
+
+        // Exportar relatório do evento atual
+        function exportarRelatorio() {
+            if (!sistemaData.eventoAtivo) {
+                alert('❌ Nenhum evento ativo para gerar relatório!');
+                return;
+            }
+
+            const abordagensEvento = sistemaData.abordagens.filter(a => a.eventoId === sistemaData.eventoAtivo.id);
+            const evento = sistemaData.eventoAtivo;
+            
+            let relatorio = gerarRelatorioEvento(evento, abordagensEvento);
+            
+            // Criar e baixar arquivo
+            const blob = new Blob([relatorio], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relatorio_${evento.nome.replace(/\s+/g, '_')}_${evento.data}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            alert('✅ Relatório exportado com sucesso!');
+        }
+
+        // Exportar relatório completo
+        function exportarRelatorioCompleto() {
+            if (sistemaData.eventos.length === 0) {
+                alert('❌ Nenhum evento encontrado para gerar relatório!');
+                return;
+            }
+
+            let relatorioCompleto = '🚔 SISTEMA BALADA SEGURA - RELATÓRIO COMPLETO\n';
+            relatorioCompleto += `📅 Gerado em: ${new Date().toLocaleString('pt-BR')}\n`;
+            relatorioCompleto += `👤 Gerado por: Matrícula ${sistemaData.usuarioLogado.matricula}\n`;
+            relatorioCompleto += '='.repeat(80) + '\n\n';
+
+            // Estatísticas gerais
+            const totalEventos = sistemaData.eventos.length;
+            const totalAbordagens = sistemaData.abordagens.length;
+            const totalAutuacoes = sistemaData.abordagens.filter(a => a.foiAutuado === 'sim').length;
+
+            relatorioCompleto += '📊 ESTATÍSTICAS GERAIS:\n';
+            relatorioCompleto += `• Total de eventos criados: ${totalEventos}\n`;
+            relatorioCompleto += `• Total de abordagens: ${totalAbordagens}\n`;
+            relatorioCompleto += `• Total de autuações: ${totalAutuacoes}\n`;
+            relatorioCompleto += `• Taxa de autuação: ${totalAbordagens > 0 ? (totalAutuacoes/totalAbordagens*100).toFixed(1) : 0}%\n\n`;
+
+            // Relatório por evento
+            sistemaData.eventos.forEach((evento, index) => {
+                const abordagensEvento = sistemaData.abordagens.filter(a => a.eventoId === evento.id);
+                relatorioCompleto += `\n${'='.repeat(60)}\n`;
+                relatorioCompleto += `EVENTO ${index + 1}/${totalEventos}\n`;
+                relatorioCompleto += `${'='.repeat(60)}\n`;
+                relatorioCompleto += gerarRelatorioEvento(evento, abordagensEvento);
+            });
+
+            // Criar e baixar arquivo
+            const blob = new Blob([relatorioCompleto], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relatorio_completo_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            alert('✅ Relatório completo exportado com sucesso!');
+        }
+
+        // Gerar relatório de um evento específico
+        function gerarRelatorioEvento(evento, abordagensEvento) {
+            let relatorio = `🚨 RELATÓRIO DO EVENTO: ${evento.nome}\n\n`;
+            
+            // Informações do evento
+            relatorio += '📋 DADOS DO EVENTO:\n';
+            relatorio += `• Nome: ${evento.nome}\n`;
+            relatorio += `• Data: ${evento.data}\n`;
+            relatorio += `• Hora: ${evento.hora}\n`;
+            relatorio += `• Local: ${evento.local}\n`;
+            relatorio += `• Matrículas participantes: ${evento.matriculas.join(', ')}\n`;
+            relatorio += `• Status: ${evento.ativo ? 'Ativo' : 'Encerrado'}\n`;
+            relatorio += `• Criado por: Matrícula ${evento.criadoPor}\n`;
+            relatorio += `• Criado em: ${new Date(evento.criadoEm).toLocaleString('pt-BR')}\n`;
+            
+            if (evento.encerradoEm) {
+                relatorio += `• Encerrado por: Matrícula ${evento.encerradoPor}\n`;
+                relatorio += `• Encerrado em: ${new Date(evento.encerradoEm).toLocaleString('pt-BR')}\n`;
+            }
+            
+            // Estatísticas do evento
+            const totalAutuados = abordagensEvento.filter(a => a.foiAutuado === 'sim').length;
+            const totalTestesPositivos = abordagensEvento.filter(a => a.testeEtilometro === 'realizado_positivo').length;
+            const totalRecusas = abordagensEvento.filter(a => a.testeEtilometro === 'recusou').length;
+            const totalRemocoes = abordagensEvento.filter(a => a.veiculoRemovido === 'sim').length;
+            
+            relatorio += `\n📊 ESTATÍSTICAS DO EVENTO:\n`;
+            relatorio += `• Total de abordagens: ${abordagensEvento.length}\n`;
+            relatorio += `• Veículos autuados: ${totalAutuados}\n`;
+            relatorio += `• Testes positivos: ${totalTestesPositivos}\n`;
+            relatorio += `• Recusas de teste: ${totalRecusas}\n`;
+            relatorio += `• Veículos removidos: ${totalRemocoes}\n`;
+            relatorio += `• Taxa de autuação: ${abordagensEvento.length > 0 ? (totalAutuados/abordagensEvento.length*100).toFixed(1) : 0}%\n`;
+            
+            // Detalhes das abordagens
+            if (abordagensEvento.length > 0) {
+                relatorio += `\n📝 DETALHES DAS ABORDAGENS:\n`;
+                relatorio += '-'.repeat(80) + '\n';
+                
+                abordagensEvento.forEach((abordagem, index) => {
+                    relatorio += `\n${index + 1}. ABORDAGEM #${abordagem.id}\n`;
+                    relatorio += `   🚗 Placa: ${abordagem.placaVeiculo}\n`;
+                    relatorio += `   👤 CPF: ${abordagem.cpfCondutor || 'Não informado'}\n`;
+                    relatorio += `   🆔 CNH: ${abordagem.cnhCondutor || 'Não informado'}\n`;
+                    relatorio += `   ${abordagem.foiAutuado === 'sim' ? '❌' : '✅'} Autuado: ${abordagem.foiAutuado === 'sim' ? 'Sim' : 'Não'}\n`;
+                    relatorio += `   🍺 Etilômetro: ${getTesteEtilometroText(abordagem.testeEtilometro)}\n`;
+                    relatorio += `   🚛 Removido: ${abordagem.veiculoRemovido === 'sim' ? 'Sim' : 'Não'}\n`;
+                    
+                    if (abordagem.artigosAplicados && abordagem.artigosAplicados.length > 0) {
+                        relatorio += `   📜 Artigos aplicados:\n`;
+                        abordagem.artigosAplicados.forEach(artigo => {
+                            relatorio += `      • Art. ${artigo.artigo}: ${artigo.descricao}\n`;
+                        });
+                    }
+                    
+                    if (abordagem.observacoes) {
+                        relatorio += `   💭 Observações: ${abordagem.observacoes}\n`;
+                    }
+                    
+                    relatorio += `   👮 Registrado por: Matrícula ${abordagem.registradoPor}\n`;
+                    relatorio += `   📅 Data/Hora: ${new Date(abordagem.registradoEm).toLocaleString('pt-BR')}\n`;
+                    
+                    if (abordagem.localizacao) {
+                        relatorio += `   📍 GPS: ${abordagem.localizacao.latitude.toFixed(6)}, ${abordagem.localizacao.longitude.toFixed(6)}\n`;
+                    }
+                    
+                    relatorio += '-'.repeat(40) + '\n';
+                });
+            } else {
+                relatorio += `\n❌ Nenhuma abordagem foi registrada neste evento.\n`;
+            }
+            
+            return relatorio;
+        }
+
+        // Formatação automática de campos
+        function initializeFormatters() {
+            // Formatação de placa
+            const placaInput = document.getElementById('placaVeiculo');
+            if (placaInput) {
+                placaInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                    if (value.length > 3) {
+                        value = value.substring(0, 3) + '-' + value.substring(3, 7);
+                    }
+                    e.target.value = value;
+                });
+            }
+
+            // Formatação de CPF
+            const cpfInput = document.getElementById('cpfCondutor');
+            if (cpfInput) {
+                cpfInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 11) value = value.substring(0, 11);
+                    if (value.length > 9) value = value.substring(0, 9) + '-' + value.substring(9);
+                    if (value.length > 6) value = value.substring(0, 6) + '.' + value.substring(6);
+                    if (value.length > 3) value = value.substring(0, 3) + '.' + value.substring(3);
+                    e.target.value = value;
+                });
+            }
+
+            // Definir data e hora padrão
+            const dataInput = document.getElementById('dataBlitz');
+            const horaInput = document.getElementById('horaBlitz');
+            if (dataInput && horaInput) {
+                const agora = new Date();
+                dataInput.value = agora.toISOString().split('T')[0];
+                horaInput.value = agora.toTimeString().split(':').slice(0, 2).join(':');
+            }
+        }
+
+        // Função para salvar dados (simulação de persistência)
+        function salvarDados() {
+            // Em um sistema real, aqui seria feita a chamada para a API do backend
+            console.log('📁 Dados salvos automaticamente:', {
+                usuarios: Object.keys(sistemaData.usuarios).length,
+                eventos: sistemaData.eventos.length,
+                abordagens: sistemaData.abordagens.length,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Função para carregar dados de demonstração
+        function carregarDadosDemonstracao() {
+            // Evento de exemplo
+            const eventoDemo = {
+                id: Date.now() - 1000000,
+                nome: 'Balada Segura',
+                data: new Date().toISOString().split('T')[0],
+                hora: '22:00',
+                local: 'Av. Principal, Centro - Torres/RS',
+                matriculas: ['100', '101'],
+                ativo: true,
+                criadoPor: '257',
+                criadoEm: new Date(Date.now() - 3600000), // 1 hora atrás
+                abordagens: 0
+            };
+            
+            sistemaData.eventos.push(eventoDemo);
+            sistemaData.eventoAtivo = eventoDemo;
+            
+            // Abordagens de exemplo
+            const abordagensDemo = [
+                {
+                    id: Date.now() - 900000,
+
+                    eventoId: eventoDemo.id,
+                    placaVeiculo: 'ABC-1234',
+                    cpfCondutor: '123.456.789-00',
+                    cnhCondutor: '12345678901',
+                    foiAutuado: 'sim',
+                    testeEtilometro: 'recusou',
+                    veiculoRemovido: 'nao',
+                    artigosAplicados: [
+                        { artigo: '165-A', descricao: artigosCTB['165-A'] }
+                    ],
+                    observacoes: 'Condutor apresentava sinais de embriaguez e se recusou a fazer o teste do etilômetro.',
+                    registradoPor: '100',
+                    registradoEm: new Date(Date.now() - 900000),
+                    localizacao: null
+                },
+                {
+                    id: Date.now() - 600000,
+                    eventoId: eventoDemo.id,
+                    placaVeiculo: 'XYZ-5678',
+                    cpfCondutor: '987.654.321-00',
+                    cnhCondutor: '',
+                    foiAutuado: 'sim',
+                    testeEtilometro: 'realizado_positivo',
+                    veiculoRemovido: 'sim',
+                    artigosAplicados: [
+                        { artigo: '306', descricao: artigosCTB['306'] },
+                        { artigo: '218', descricao: artigosCTB['218'] }
+                    ],
+                    observacoes: 'Condutor avançou sinal vermelho e estava em velocidade excessiva. Teste do etilômetro positivo.',
+                    registradoPor: '101',
+                    registradoEm: new Date(Date.now() - 600000),
+                    localizacao: null
+                },
+                {
+                    id: Date.now() - 300000,
+                    eventoId: eventoDemo.id,
+                    placaVeiculo: 'DEF-9012',
+                    cpfCondutor: '',
+                    cnhCondutor: '98765432109',
+                    foiAutuado: 'nao',
+                    testeEtilometro: 'realizado_negativo',
+                    veiculoRemovido: 'nao',
+                    artigosAplicados: [],
+                    observacoes: 'Abordagem de rotina. Condutor sóbrio e documentação em ordem.',
+                    registradoPor: '100',
+                    registradoEm: new Date(Date.now() - 300000),
+                    localizacao: null
+                }
+            ];
+            
+            sistemaData.abordagens.push(...abordagensDemo);
+        }
+
+        // Função de inicialização
+        function inicializarSistema() {
+            console.log('🚔 Iniciando Sistema Balada Segura...');
+            
+            // Inicializar usuários base (sem senhas)
+            inicializarUsuariosBase();
+            
+            // Carregar dados de demonstração
+            carregarDadosDemonstracao();
+            
+            // Inicializar formatadores
+            initializeFormatters();
+            
+            // Configurar salvamento automático
+            setInterval(salvarDados, 30000); // A cada 30 segundos
+            
+            console.log('✅ Sistema inicializado com sucesso!');
+        }
+
+        // Função para validar CPF (opcional)
+        function validarCPF(cpf) {
+            cpf = cpf.replace(/[^\d]+/g, '');
+            if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
+            
+            const cpfArray = cpf.split('');
+            const validator = cpfArray
+                .filter((digit, index, array) => index < array.length - 2)
+                .map((digit, index) => (+digit) * (cpfArray.length - 1 - index))
+                .reduce((acc, step) => acc + step) % 11;
+            
+            return validator < 2 ? +cpfArray[9] === 0 : +cpfArray[9] === 11 - validator;
+        }
+
+        // Função para gerar backup dos dados
+        function gerarBackup() {
+            const backup = {
+                versao: '1.0',
+                timestamp: new Date().toISOString(),
+                geradoPor: sistemaData.usuarioLogado?.matricula || 'sistema',
+                dados: {
+                    usuarios: sistemaData.usuarios,
+                    eventos: sistemaData.eventos,
+                    abordagens: sistemaData.abordagens
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_balada_segura_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            alert('✅ Backup gerado com sucesso!');
+        }
+
+        // Adicionar funcionalidade de tela cheia para mobile
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Erro ao entrar em tela cheia: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Event listeners para funcionalidades extras
+        document.addEventListener('DOMContentLoaded', function() {
+            // Permitir login com Enter
+            document.getElementById('senha').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+
+            // Foco automático no campo de matrícula
+            document.getElementById('matricula').focus();
+
+            // Detectar modo mobile e adicionar funcionalidades específicas
+            if (window.innerWidth <= 768) {
+                document.body.style.userSelect = 'none'; // Evitar seleção acidental
+                
+                // Adicionar meta tag para viewport se não existir
+                if (!document.querySelector('meta[name="viewport"]')) {
+                    const viewport = document.createElement('meta');
+                    viewport.name = 'viewport';
+                    viewport.content = 'width=device-width, initial-scale=1.0, user-scalable=no';
+                    document.head.appendChild(viewport);
+                }
+            }
+
+            // Inicializar sistema
+            inicializarSistema();
+        });
+
+        // Service Worker para funcionamento offline (conceitual)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // Em produção, implementar service worker para cache offline
+                console.log('📱 Service Worker disponível - implementar cache offline');
+            });
+        }
+
+        // Detectar perda de conexão
+        window.addEventListener('online', function() {
+            console.log('🌐 Conexão restabelecida');
+        });
+
+        window.addEventListener('offline', function() {
+            console.log('📵 Conexão perdida - modo offline');
+            alert('⚠️ Conexão com a internet perdida. Os dados serão salvos localmente.');
+        });
+
+        // Prevenir perda de dados ao sair da página
+        window.addEventListener('beforeunload', function(e) {
+            if (sistemaData.usuarioLogado) {
+                salvarDados();
+                e.preventDefault();
+                e.returnValue = 'Tem certeza que deseja sair? Dados não salvos podem ser perdidos.';
+                return e.returnValue;
+            }
+        });
+
+        // Função para limpar dados de demonstração (para produção)
+        function limparDadosDemo() {
+            if (confirm('⚠️ ATENÇÃO: Esta ação irá remover todos os dados de demonstração!\n\nTem certeza que deseja continuar?')) {
+                sistemaData.eventos = [];
+                sistemaData.abordagens = [];
+                sistemaData.eventoAtivo = null;
+                
+                // Manter apenas estrutura base dos usuários, gerando novas senhas
+                const usuariosTemp = {};
+                for (let matricula in sistemaData.usuarios) {
+                    const usuario = sistemaData.usuarios[matricula];
+                    if (usuario.isAdmin || ['257', '100', '101'].includes(matricula)) {
+                        const novaSenhaTemp = gerarSenhaTemporaria();
+                        usuariosTemp[matricula] = {
+                            senha: CryptoJS.SHA256(novaSenhaTemp).toString(),
+                            ativo: true,
+                            isAdmin: usuario.isAdmin,
+                            primeiroAcesso: true,
+                            senhaTemporaria: novaSenhaTemp,
+                            criadoEm: new Date(),
+                            criadoPor: 'sistema'
+                        };
+                    }
+                }
+                sistemaData.usuarios = usuariosTemp;
+                
+                // Exibir novas credenciais
+                let credenciais = '';
+                for (let matricula in usuariosTemp) {
+                    credenciais += `Matrícula ${matricula}: ${usuariosTemp[matricula].senhaTemporaria}\n`;
+                }
+                
+                alert(`✅ Dados de demonstração removidos!\n\n🔑 NOVAS CREDENCIAIS:\n${credenciais}\n⚠️ Anote essas senhas temporárias!`);
+                logout();
+            }
+        }
+
+        // Função de ajuda/tutorial
+        function mostrarAjuda() {
+            const ajuda = `
+🚔 SISTEMA BALADA SEGURA - GUIA RÁPIDO
+
+👑 ADMINISTRADOR:
+• Cadastrar novos operadores (senha temporária gerada automaticamente)
+• Criar e encerrar eventos de blitz  
+• Visualizar relatórios completos
+• Gerenciar usuários do sistema
+• Gerar novas senhas temporárias quando necessário
+
+👮 OPERADOR:
+• Registrar abordagens durante eventos
+• Consultar histórico de abordagens
+• Visualizar detalhes das ocorrências
+• Trocar senha no primeiro acesso
+
+� SEGURANÇA:
+• Senhas são geradas automaticamente para novos usuários
+• Primeiro acesso obriga troca de senha
+• Todas as senhas são protegidas com hash SHA256
+• Senhas temporárias são exibidas apenas uma vez
+
+�📱 DICAS DE USO:
+• Use a geolocalização para capturar o local automaticamente
+• Preencha todos os campos obrigatórios
+• O artigo 165-A é aplicado automaticamente em caso de recusa
+• Dados são salvos automaticamente a cada 30 segundos
+
+🆘 SUPORTE:
+• Problemas técnicos: contate o administrador
+• Dúvidas sobre legislação: consulte o CTB
+• Backup dos dados: função disponível no painel admin
+
+Versão: 2.0 | Desenvolvido para Torres/RS
+            `.trim();
+            
+            alert(ajuda);
+        }
+
+        // Exportar funções globais para uso em produção
+        window.sistemaBaladaSegura = {
+            login,
+            logout,
+            salvarDados,
+            gerarBackup,
+            limparDadosDemo,
+            mostrarAjuda,
+            gerarSenhaTemporaria,
+            configurarAdminManual,
+            versao: '2.0'
+        };
+
+        console.log('🚔 Sistema Balada Segura v2.0 carregado com sucesso!');
+        console.log('� Sistema de senhas seguras ativado - senhas temporárias serão geradas automaticamente.');
+        console.log('📋 As credenciais de primeiro acesso serão exibidas no console e em alertas.');
+        console.log('');
+        console.log('💡 PARA CONFIGURAR ADMINISTRADOR MANUALMENTE:');
+        console.log('   Execute: sistemaBaladaSegura.configurarAdminManual("257", "suaSenha")');
+        console.log('   Isso evitará a geração automática de senhas temporárias.');
+        console.log('');
+        console.log('🔄 PARA RESETAR: delete localStorage.adminConfigurado e recarregue a página');
+    </script>
+</body>
+</html>
