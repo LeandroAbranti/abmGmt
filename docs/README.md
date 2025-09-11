@@ -6,10 +6,6 @@ Sistema completo de autenticação e gestão de eventos de trânsito com tecnolo
 
 **URL**: [https://leandroabranti.github.io/abmGmt](https://leandroabranti.github.io/abmGmt)
 
-## 👑 **Administradores Autorizados**
-
-- **Matrícula 257** - Administrador 1
-- **Matrícula 862** - Administrador 2
 
 ## 🔐 **Como Acessar**
 
