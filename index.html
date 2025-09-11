@@ -1,15 +1,98 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0; url=app.html">
-    <title>Sistema Balada Segura - Redirecionando...</title>
-</head>
-<body>
-    <p>Redirecionando para o sistema...</p>
-    <script>
-        window.location.href = "app.html";
-    </script>
-</body>
-</html>
+<!-- Adicionar estes campos ao formulário de login existente -->
+
+<!-- Campo oculto para primeira configuração -->
+<input type="hidden" id="matriculaOculta" value="">
+
+<!-- Mensagem para primeiro acesso -->
+<div id="mensagemPrimeiroAcesso" style="display: none; padding: 15px; background: rgba(33, 150, 243, 0.1); border-left: 4px solid #2196F3; border-radius: 4px; margin: 15px 0;">
+    <h4>📧 Primeiro Acesso</h4>
+    <p>Digite seu email para receber o código de acesso:</p>
+</div>
+
+<!-- Campo de email para primeiro acesso -->
+<div id="campoEmailPrimeiroAcesso" style="display: none;">
+    <div class="form-group">
+        <label for="emailPrimeiroAcesso">Email:</label>
+        <input type="email" id="emailPrimeiroAcesso" placeholder="seu@email.com" required>
+        <small>Este email será usado para enviar seu código de acesso.</small>
+    </div>
+    <div class="form-actions">
+        <button type="button" class="btn btn-primary" onclick="solicitarTokenComEmail()">📧 Enviar Código</button>
+        <button type="button" class="btn btn-secondary" onclick="voltarParaLogin()">↩️ Voltar</button>
+    </div>
+</div>
+
+<!-- Formulário de criação de senha (adicionar ao HTML) -->
+<div id="criarSenhaForm" class="form-container" style="display: none;">
+    <h2>🔐 Criar Senha</h2>
+    <p>Matrícula: <strong id="matriculaNovaSenha"></strong></p>
+    <p>Defina sua senha de acesso ao sistema:</p>
+    
+    <div class="form-group">
+        <label for="novaSenha">Nova Senha:</label>
+        <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="confirmarSenha">Confirmar Senha:</label>
+        <input type="password" id="confirmarSenha" placeholder="Digite a senha novamente" required>
+    </div>
+    
+    <div class="form-actions">
+        <button type="button" class="btn btn-success" onclick="criarSenha()">✅ Criar Senha</button>
+        <button type="button" class="btn btn-secondary" onclick="voltarParaLogin()">↩️ Voltar</button>
+    </div>
+</div>
+
+<!-- Atualizar o formulário de senha existente -->
+<div id="senhaForm" class="form-container" style="display: none;">
+    <h2>🔐 Digite sua Senha</h2>
+    <p>Matrícula: <strong id="matriculaSenha"></strong></p>
+    
+    <div class="form-group">
+        <label for="senhaLogin">Senha:</label>
+        <input type="password" id="senhaLogin" placeholder="Digite sua senha" required>
+    </div>
+    
+    <div class="form-actions">
+        <button type="button" class="btn btn-success" onclick="fazerLogin()">✅ Entrar</button>
+        <button type="button" class="btn btn-secondary" onclick="voltarParaLogin()">↩️ Voltar</button>
+    </div>
+</div>
+
+<!-- Indicador de status da API -->
+<div id="statusAPI" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+    <div id="indicadorAPI" style="padding: 5px 10px; border-radius: 15px; font-size: 12px; background: #4CAF50; color: white;">
+        🟢 API Conectada
+    </div>
+</div>
+
+<!-- Scripts necessários - adicionar antes do fechamento do body -->
+<script>
+// Configuração global
+let usuarioAtual = null;
+
+// Status da API
+async function atualizarStatusAPI() {
+    const indicador = document.getElementById('indicadorAPI');
+    
+    try {
+        const response = await fetch('http://localhost:3001/api/status');
+        if (response.ok) {
+            indicador.innerHTML = '🟢 API Conectada';
+            indicador.style.background = '#4CAF50';
+        } else {
+            throw new Error('API Error');
+        }
+    } catch (error) {
+        indicador.innerHTML = '🔴 API Offline';
+        indicador.style.background = '#f44336';
+    }
+}
+
+// Verificar status da API a cada 30 segundos
+setInterval(atualizarStatusAPI, 30000);
+
+// Verificar status inicial
+atualizarStatusAPI();
+</script>
