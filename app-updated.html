@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABM - Sistema de Gestão de Trânsito (Back-end Integrado)</title>
+    <script src="crypto-js.min.js"></script>
+    <style>
+        /* Manter todos os estilos CSS existentes do app.html original */
+        /* Adicionar estilos para novos elementos */
+        
+        #statusAPI {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+        
+        #indicadorAPI {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            background: #4CAF50;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .mensagem-primeiro-acesso {
+            padding: 15px;
+            background: rgba(33, 150, 243, 0.1);
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .form-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .form-group small {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-secondary { background: #757575; color: white; }
+        
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <!-- Indicador de status da API -->
+    <div id="statusAPI">
+        <div id="indicadorAPI">🟢 API Conectada</div>
+    </div>
+
+    <!-- Container principal de login -->
+    <div id="loginContainer">
+        <!-- Formulário de login inicial -->
+        <div id="loginForm" class="form-container">
+            <h2>🚗 Sistema ABM - Login</h2>
+            <p>Digite sua matrícula ou email para acessar o sistema:</p>
+            
+            <div class="form-group">
+                <label for="matriculaEmail">Matrícula ou Email:</label>
+                <input type="text" id="matriculaEmail" placeholder="257 ou admin@email.com" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-primary" onclick="solicitarToken()">📧 Solicitar Acesso</button>
+            </div>
+            
+            <!-- Campo oculto para armazenar matrícula -->
+            <input type="hidden" id="matriculaOculta" value="">
+            
+            <!-- Mensagem para primeiro acesso -->
+            <div id="mensagemPrimeiroAcesso" class="mensagem-primeiro-acesso" style="display: none;">
+                <h4>📧 Primeiro Acesso</h4>
+                <p>Digite seu email para receber o código de acesso:</p>
+            </div>
+            
+            <!-- Campo de email para primeiro acesso -->
+            <div id="campoEmailPrimeiroAcesso" style="display: none;">
+                <div class="form-group">
+                    <label for="emailPrimeiroAcesso">Email:</label>
+                    <input type="email" id="emailPrimeiroAcesso" placeholder="seu@email.com" required>
+                    <small>Este email será usado para enviar seu código de acesso.</small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-primary" onclick="solicitarTokenComEmail()">📧 Enviar Código</button>
+                    <button type="button" class="btn btn-secondary" onclick="voltarParaLogin()">↩️ Voltar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de validação de token -->
+        <div id="tokenForm" class="form-container" style="display: none;">
+            <h2>🔐 Digite o Código</h2>
+            <p>Matrícula: <strong id="matriculaToken"></strong></p>
+            <p>Digite o código de 6 dígitos enviado por email:</p>
+            
+            <div class="form-group">
+                <label for="tokenInput">Código de Acesso:</label>
+                <input type="text" id="tokenInput" placeholder="123456" maxlength="6" required>
+                <small>Válido por 10 minutos</small>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-success" onclick="validarToken()">✅ Validar</button>
+                <button type="button" class="btn btn-secondary" onclick="voltarParaLogin()">↩️ Voltar</button>
+            </div>
+        </div>
+
+        <!-- Formulário de criação de senha -->
+        <div id="criarSenhaForm" class="form-container" style="display: none;">
+            <h2>🔐 Criar Senha</h2>
+            <p>Matrícula: <strong id="matriculaNovaSenha"></strong></p>
+            <p>Defina sua senha de acesso ao sistema:</p>
+            
+            <div class="form-group">
+                <label for="novaSenha">Nova Senha:</label>
+                <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmarSenha">Confirmar Senha:</label>
+                <input type="password" id="confirmarSenha" placeholder="Digite a senha novamente" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-success" onclick="criarSenha()">✅ Criar Senha</button>
+                <button type="button" class="btn btn-secondary" onclick="voltarParaLogin()">↩️ Voltar</button>
+            </div>
+        </div>
+
+        <!-- Formulário de login com senha -->
+        <div id="senhaForm" class="form-container" style="display: none;">
+            <h2>🔐 Digite sua Senha</h2>
+            <p>Matrícula: <strong id="matriculaSenha"></strong></p>
+            
+            <div class="form-group">
+                <label for="senhaLogin">Senha:</label>
+                <input type="password" id="senhaLogin" placeholder="Digite sua senha" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-success" onclick="fazerLogin()">✅ Entrar</button>
+                <button type="button" class="btn btn-secondary" onclick="voltarParaLogin()">↩️ Voltar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sistema principal (após login) -->
+    <div id="sistema" style="display: none;">
+        <div style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1>🚗 Sistema ABM - Gestão de Trânsito</h1>
+                <div>
+                    <span id="usuarioLogado"></span>
+                    <button class="btn btn-secondary" onclick="logout()" style="margin-left: 10px;">🚪 Sair</button>
+                </div>
+            </div>
+            
+            <!-- Conteúdo do sistema (manter o HTML original do app.html) -->
+            <div id="conteudoSistema">
+                <p>🎉 Login realizado com sucesso!</p>
+                <p>Sistema integrado com back-end seguro.</p>
+                <!-- Aqui você deve copiar todo o conteúdo do sistema do app.html original -->
+            </div>
+            
+            <!-- Painel Admin (visível apenas para administradores) -->
+            <div id="adminPanel" class="hidden">
+                <h3>👑 Painel Administrativo</h3>
+                <p>Funcionalidades administrativas disponíveis.</p>
+                <!-- Aqui você deve copiar o painel admin do app.html original -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração global
+        const API_BASE = 'http://localhost:3001/api';
+        let usuarioAtual = null;
+// ==== CONFIGURAÇÃO DA API ====
+const API_BASE = 'http://localhost:3001/api';
+
+// ==== FUNÇÕES DE API ATUALIZADAS ====
+
+// Configuração do serviço de email (agora gerenciado pelo back-end)
+const emailConfig = {
+    configurado: true // Back-end gerencia tudo
+};
+
+// Função para solicitar token de acesso
+async function solicitarToken() {
+    const identificador = document.getElementById('matriculaEmail').value.trim();
+    
+    if (!identificador) {
+        alert('Por favor, digite sua matrícula ou email.');
+        return;
+    }
+
+    try {
+        // Verificar primeiro se precisa de email (primeiro acesso)
+        const response = await fetch(`${API_BASE}/solicitar-token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identificador })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.primeiroAcesso) {
+                // Primeiro acesso - solicitar email
+                mostrarCampoEmail(result.matricula);
+            } else {
+                // Token enviado com sucesso
+                mostrarMensagemSucesso(`Token enviado para ${result.message.split(' ').pop()}`);
+                mostrarTelaToken(result.matricula);
+            }
+        } else {
+            mostrarMensagemErro(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao solicitar token:', error);
+        mostrarMensagemErro('Erro de conexão com o servidor');
+    }
+}
+
+// Função para solicitar token com email (primeiro acesso)
+async function solicitarTokenComEmail() {
+    const matricula = document.getElementById('matriculaOculta').value;
+    const email = document.getElementById('emailPrimeiroAcesso').value.trim();
+    
+    if (!email) {
+        alert('Por favor, digite seu email.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/solicitar-token-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ matricula, email })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarMensagemSucesso(`Token enviado para ${email}`);
+            esconderCampoEmail();
+            mostrarTelaToken(result.matricula);
+        } else {
+            mostrarMensagemErro(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao solicitar token com email:', error);
+        mostrarMensagemErro('Erro de conexão com o servidor');
+    }
+}
+
+// Função para validar token
+async function validarToken() {
+    const token = document.getElementById('tokenInput').value.trim();
+    
+    if (!token || token.length !== 6) {
+        alert('Por favor, digite o token de 6 dígitos.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/validar-token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Salvar dados temporários
+            sessionStorage.setItem('tokenAtual', token);
+            sessionStorage.setItem('matriculaAtual', result.matricula);
+            sessionStorage.setItem('emailAtual', result.email);
+            sessionStorage.setItem('isAdmin', result.isAdmin);
+            
+            if (result.temSenha) {
+                // Usuário já tem senha - mostrar tela de login
+                mostrarTelaSenha();
+            } else {
+                // Primeiro acesso - criar senha
+                mostrarTelaCriarSenha();
+            }
+        } else {
+            mostrarMensagemErro(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao validar token:', error);
+        mostrarMensagemErro('Erro de conexão com o servidor');
+    }
+}
+
+// Função para criar senha (primeiro acesso)
+async function criarSenha() {
+    const senha = document.getElementById('novaSenha').value;
+    const confirmarSenha = document.getElementById('confirmarSenha').value;
+    const token = sessionStorage.getItem('tokenAtual');
+    
+    if (!senha || !confirmarSenha) {
+        alert('Por favor, preencha todos os campos.');
+        return;
+    }
+    
+    if (senha !== confirmarSenha) {
+        alert('As senhas não coincidem.');
+        return;
+    }
+    
+    if (senha.length < 6) {
+        alert('A senha deve ter pelo menos 6 caracteres.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/criar-senha`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, senha })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarMensagemSucesso('Senha criada com sucesso!');
+            // Fazer login automático
+            await fazerLogin(token, senha);
+        } else {
+            mostrarMensagemErro(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao criar senha:', error);
+        mostrarMensagemErro('Erro de conexão com o servidor');
+    }
+}
+
+// Função para fazer login
+async function fazerLogin(tokenParam = null, senhaParam = null) {
+    const token = tokenParam || sessionStorage.getItem('tokenAtual');
+    const senha = senhaParam || document.getElementById('senhaLogin').value;
+    
+    if (!senha) {
+        alert('Por favor, digite sua senha.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, senha })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Login bem-sucedido
+            usuarioAtual = {
+                matricula: result.usuario.matricula,
+                nome: result.usuario.nome,
+                email: result.usuario.email,
+                isAdmin: result.usuario.isAdmin,
+                ativo: true
+            };
+            
+            // Limpar dados temporários
+            sessionStorage.clear();
+            
+            // Salvar sessão do usuário
+            localStorage.setItem('usuarioLogado', JSON.stringify(usuarioAtual));
+            
+            mostrarMensagemSucesso(`Bem-vindo, ${usuarioAtual.nome}!`);
+            mostrarSistema();
+        } else {
+            mostrarMensagemErro(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao fazer login:', error);
+        mostrarMensagemErro('Erro de conexão com o servidor');
+    }
+}
+
+// Função para verificar status da API
+async function verificarStatusAPI() {
+    try {
+        const response = await fetch(`${API_BASE}/status`);
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ API conectada:', result.message);
+            return true;
+        }
+    } catch (error) {
+        console.error('❌ API não disponível:', error);
+        mostrarMensagemErro('Servidor não disponível. Verifique se o back-end está rodando.');
+        return false;
+    }
+}
+
+// ==== FUNÇÕES DE INTERFACE (AUXILIARES) ====
+
+function mostrarCampoEmail(matricula) {
+    document.getElementById('matriculaOculta').value = matricula;
+    document.getElementById('campoEmailPrimeiroAcesso').style.display = 'block';
+    document.getElementById('mensagemPrimeiroAcesso').style.display = 'block';
+}
+
+function esconderCampoEmail() {
+    document.getElementById('campoEmailPrimeiroAcesso').style.display = 'none';
+    document.getElementById('mensagemPrimeiroAcesso').style.display = 'none';
+}
+
+function mostrarTelaToken(matricula) {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('tokenForm').style.display = 'block';
+    document.getElementById('matriculaToken').textContent = matricula;
+}
+
+function mostrarTelaSenha() {
+    document.getElementById('tokenForm').style.display = 'none';
+    document.getElementById('senhaForm').style.display = 'block';
+    document.getElementById('matriculaSenha').textContent = sessionStorage.getItem('matriculaAtual');
+}
+
+function mostrarTelaCriarSenha() {
+    document.getElementById('tokenForm').style.display = 'none';
+    document.getElementById('criarSenhaForm').style.display = 'block';
+    document.getElementById('matriculaNovaSenha').textContent = sessionStorage.getItem('matriculaAtual');
+}
+
+function mostrarSistema() {
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('sistema').style.display = 'block';
+    
+    // Mostrar painel admin se for administrador
+    if (usuarioAtual.isAdmin) {
+        document.getElementById('adminPanel').classList.remove('hidden');
+    }
+    
+    inicializarSistema();
+}
+
+function mostrarMensagemSucesso(mensagem) {
+    // Implementar notificação de sucesso
+    console.log('✅', mensagem);
+    // Você pode criar um toast/notificação aqui
+}
+
+function mostrarMensagemErro(mensagem) {
+    // Implementar notificação de erro
+    console.error('❌', mensagem);
+    alert(mensagem); // Temporário - substituir por notificação mais elegante
+}
+
+function voltarParaLogin() {
+    // Limpar dados temporários
+    sessionStorage.clear();
+    
+    // Resetar formulários
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('tokenForm').style.display = 'none';
+    document.getElementById('senhaForm').style.display = 'none';
+    document.getElementById('criarSenhaForm').style.display = 'none';
+    esconderCampoEmail();
+    
+    // Limpar campos
+    document.getElementById('matriculaEmail').value = '';
+    document.getElementById('tokenInput').value = '';
+    document.getElementById('senhaLogin').value = '';
+    document.getElementById('novaSenha').value = '';
+    document.getElementById('confirmarSenha').value = '';
+}
+
+// ==== INICIALIZAÇÃO ====
+
+// Verificar API ao carregar a página
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 Iniciando sistema ABM com back-end seguro...');
+    
+    // Verificar se API está disponível
+    const apiDisponivel = await verificarStatusAPI();
+    
+    if (apiDisponivel) {
+        console.log('✅ Sistema pronto para uso!');
+    } else {
+        console.log('⚠️  Sistema em modo offline - algumas funcionalidades podem não funcionar');
+    }
+    
+    // Verificar se há usuário logado
+    const usuarioSalvo = localStorage.getItem('usuarioLogado');
+    if (usuarioSalvo) {
+        try {
+            usuarioAtual = JSON.parse(usuarioSalvo);
+            mostrarSistema();
+        } catch (error) {
+            console.error('Erro ao recuperar usuário salvo:', error);
+            localStorage.removeItem('usuarioLogado');
+        }
+    }
+});
+
+// Função de logout
+function logout() {
+    localStorage.removeItem('usuarioLogado');
+    sessionStorage.clear();
+    usuarioAtual = null;
+    
+    document.getElementById('sistema').style.display = 'none';
+    document.getElementById('loginContainer').style.display = 'block';
+    document.getElementById('adminPanel').classList.add('hidden');
+    
+    voltarParaLogin();
+}    </script>
+</body>
+</html>
