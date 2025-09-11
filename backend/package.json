@@ -1,0 +1,27 @@
+{
+  "name": "abm-backend",
+  "version": "1.0.0",
+  "description": "API backend para sistema de autenticação ABM",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo 'No build needed'",
+    "test": "node test-client.js"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": ["abm", "authentication", "token", "email", "express"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "@emailjs/nodejs": "^4.0.3",
+    "dotenv": "^16.4.5",
+    "axios": "^1.7.7"
+  }
+}
