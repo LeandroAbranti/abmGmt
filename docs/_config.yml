@@ -1,0 +1,38 @@
+title: "Sistema ABM - Gestão de Trânsito"
+description: "Sistema completo de autenticação e gestão de eventos de trânsito"
+baseurl: "/abmGmt"
+url: "https://leandroabranti.github.io"
+
+# GitHub Pages settings
+plugins:
+  - jekyll-relative-links
+
+# Disable Jekyll processing for HTML files
+include:
+  - "_*_.html"
+  - "_*_.htm"
+
+# Markdown settings
+markdown: kramdown
+highlighter: rouge
+
+# Collections
+collections:
+  pages:
+    output: true
+    permalink: /:name/
+
+# Default layout
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+# Exclude from processing
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
